@@ -14,43 +14,27 @@ class PasswordStrengthIndicator extends StatelessWidget {
     }
     // Calculate password strength
     int strength = 0;
-    final requirements = <String, bool>{};
   
     // Firebase requirements
     if (password.length >= 6) {
       strength++;
-      requirements['At least 6 characters'] = true;
-    } else {
-      requirements['At least 6 characters'] = false;
     }
     
     // Additional recommendations for strong passwords
     if (password.contains(RegExp(r'[A-Z]'))) {
       strength++;
-      requirements['Uppercase letter'] = true;
-    } else {
-      requirements['Uppercase letter'] = false;
     }
     
     if (password.contains(RegExp(r'[a-z]'))) {
       strength++;
-      requirements['Lowercase letter'] = true;
-    } else {
-      requirements['Lowercase letter'] = false;
     }
     
     if (password.contains(RegExp(r'[0-9]'))) {
       strength++;
-      requirements['Number'] = true;
-    } else {
-      requirements['Number'] = false;
     }
     
     if (password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
       strength++;
-      requirements['Special character'] = true;
-    } else {
-      requirements['Special character'] = false;
     }
     
     // Determine color and label
@@ -93,31 +77,32 @@ class PasswordStrengthIndicator extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 8),
-        // Requirements checklist
-        ...requirements.entries.map((entry) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Row(
-              children: [
-                Icon(
-                  entry.value ? Icons.check_circle : Icons.cancel,
-                  size: 16,
-                  color: entry.value ? Colors.green : Colors.grey,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  entry.key,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: entry.value ? Colors.green : Colors.grey,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
       ],
     );
   }
 }
+
+// const SizedBox(height: 8),
+//   // Requirements checklist
+//   ...requirements.entries.map((entry) {
+//     return Padding(
+//       padding: const EdgeInsets.only(bottom: 4),
+//       child: Row(
+//         children: [
+//           Icon(
+//             entry.value ? Icons.check_circle : Icons.cancel,
+//             size: 16,
+//             color: entry.value ? Colors.green : Colors.grey,
+//           ),
+//           const SizedBox(width: 4),
+//           Text(
+//             entry.key,
+//             style: TextStyle(
+//               fontSize: 12,
+//               color: entry.value ? Colors.green : Colors.grey,
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }).toList(),
