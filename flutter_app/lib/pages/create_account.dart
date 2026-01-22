@@ -69,7 +69,7 @@ class _CreateAccountState extends State<CreateAccount> {
                     if (message!.contains('Success')) {
                       Navigator.of(context).pushReplacement(
                         MaterialPageRoute(
-                          builder: (context) => const MyApp(),
+                          builder: (context) => const MyHomePage(),
                         ),
                       );
                     }
