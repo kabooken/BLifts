@@ -103,7 +103,7 @@ class _LoginPageState extends State<LoginPage> {
                     if (message!.contains('Success')) {
                       Navigator.of(context).pushReplacement(
                         MaterialPageRoute(
-                          builder: (context) => const MyApp(),
+                          builder: (context) => const MyHomePage(),
                         ),
                       );
                     }

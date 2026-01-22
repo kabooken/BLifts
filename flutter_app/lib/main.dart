@@ -1,10 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_app/routes.dart';
+import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'theme.dart';
 import 'pages/login_page.dart';
 import 'services/auth_service.dart';
+
+class ThemeNotifier extends ChangeNotifier {
+  ThemeMode _themeMode = ThemeMode.light;
+
+  ThemeMode get themeMode => _themeMode;
+
+  void toggleTheme() {
+    _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    notifyListeners();
+  }
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,65 +25,58 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   // Initialize AppConfigService first to load Google credentials
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeNotifier(),
+      child: MyApp(),
+    ),);
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
-
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  ThemeMode _themeMode = ThemeMode.light;
+class MyApp extends StatelessWidget {
   final AuthService _authService = AuthService();
-
-  void _toggleTheme() {
-    setState(() {
-      _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
-    });
-  }
+  MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'BLifts',
-      theme: GraniteOliveTheme.light,
-      darkTheme: GraniteOliveTheme.dark,
-      themeMode: _themeMode,
-      home: StreamBuilder<User?>(
-        stream: _authService.authStateChanges,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
-            );
-          }
+    return Consumer<ThemeNotifier>(
+      builder: (context, themeNotifier, child) {
+        return MaterialApp(
+          title: 'BLifts',
+          theme: GraniteOliveTheme.light,
+          darkTheme: GraniteOliveTheme.dark,
+          themeMode: themeNotifier.themeMode,
+          initialRoute: AppRoutes.home,
+          routes: AppRoutes.getRoutes(),
+          home: StreamBuilder<User?>(
+            stream: _authService.authStateChanges,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
 
-          if (snapshot.hasData) {
-            // User is logged in
-            return MyHomePage(
-              title: 'BLifts',
-              onToggleTheme: _toggleTheme,
-            );
-          } else {
-            // User is not logged in
-            return const LoginPage();
-          }
-        },
-      ),
+              if (snapshot.hasData) {
+                // User is logged in
+                return MyHomePage();
+              } else {
+                // User is not logged in
+                return const LoginPage();
+              }
+            },
+          ),
+        );
+      },
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title, required this.onToggleTheme});
+  const MyHomePage({super.key});
 
-  final String title;
-  final VoidCallback onToggleTheme;
+  final String title = "BLifts Home";
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -109,7 +115,10 @@ class _MyHomePageState extends State<MyHomePage> {
             icon: Icon(
               Theme.of(context).brightness == Brightness.dark ? Icons.light_mode : Icons.dark_mode,
             ),
-            onPressed: widget.onToggleTheme,
+            onPressed: () {
+              final themeNotifier = Provider.of<ThemeNotifier>(context, listen: false);
+              themeNotifier.toggleTheme();
+            },
             tooltip: 'Toggle theme',
           ),
           PopupMenuButton<String>(
