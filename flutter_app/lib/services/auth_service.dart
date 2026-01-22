@@ -1,8 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
+  bool _googleInitialized = false; 
 
   factory AuthService() {
     return _instance;
@@ -10,17 +12,57 @@ class AuthService {
 
   AuthService._internal();
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  late final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+
+  Future<void> _ensureGoogleInitialized() async {
+    try {
+      if (!_googleInitialized) {
+        await _googleSignIn.initialize(clientId: _firebaseAuth.app.options.appId);
+        _googleInitialized = true;
+      }
+    } catch (e) {
+      print('Error during Google Sign-In initialization: $e');
+      rethrow;
+    }
+  }
 
 
-  signInWithGoogle() async {
-    final GoogleSignInAccount? googleUser = await GoogleSignIn.instance.authenticate();
-    final GoogleSignInAuthentication? googleAuth = googleUser?.authentication;
-    final GoogleSignInClientAuthorization? googleClientAuth = await googleUser?.authorizationClient.authorizationForScopes(['email', 'profile']);
+  Future<UserCredential> signInWithGoogle() async {
+    // Trigger the authentication flow
+    try {
+      await _ensureGoogleInitialized();
 
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleClientAuth?.accessToken,
-      idToken: googleAuth?.idToken,
-    );
+      if (kIsWeb) {
+        // Web-specific implementation
+        GoogleAuthProvider googleProvider = GoogleAuthProvider();
+        
+        // Optional: Add scopes
+        googleProvider.addScope('email');
+        
+        // Sign in with popup
+        return await _firebaseAuth.signInWithPopup(googleProvider);
+        
+        // OR use redirect (better for mobile browsers)
+        // await _firebaseAuth.signInWithRedirect(googleProvider);
+        // return await _firebaseAuth.getRedirectResult();
+        
+      } else {
+        final GoogleSignInAccount? googleUser = await _googleSignIn.authenticate();
+        
+        // Obtain the auth details from the request
+        final GoogleSignInAuthentication? googleAuth = googleUser!.authentication;
+
+        // Create a new credential
+        final credential = GoogleAuthProvider.credential(idToken: googleAuth!.idToken);
+
+        // Once signed in, return the UserCredential
+        return await _firebaseAuth.signInWithCredential(credential);
+      }
+    }
+    catch (e) {
+      print('Error during Google Sign-In: $e');
+      rethrow;
+    }
   }
 
   Future<String?> registration({
@@ -28,7 +70,7 @@ class AuthService {
     required String password,
   }) async {
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      await _firebaseAuth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -51,7 +93,7 @@ class AuthService {
     required String password,
   }) async {
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      await _firebaseAuth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
