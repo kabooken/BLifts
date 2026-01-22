@@ -65,7 +65,7 @@ class _CreateAccountState extends State<CreateAccount> {
                       email: _emailController.text,
                       password: _passwordController.text,
                     );
-                    print(message);
+                    
                     if (message!.contains('Success')) {
                       Navigator.of(context).pushReplacement(
                         MaterialPageRoute(
